@@ -39,7 +39,7 @@ $(document).ready(function() {
 					el.height = h;
 					
 					//$(div_nav).offset({left: (w / 2) - (h / 2), top: 0});
-					this.$el.offset({left: (w / 2) - (h / 2), top: 0});
+					this.$el.offset({left: (w / 2) - (h / 2), top: 5});
 					
 					center = {
 						r: h / 2,
@@ -249,14 +249,16 @@ $(document).ready(function() {
 							this.$el.fadeIn();
 						}
 						
-						if ((nL === p100) && this.model.has("img")) {
-							var a = 0.5 * Math.sqrt(2) * this.model.get("r");
+						if (/*(nL === p100) &&*/ this.model.has("img")) {
+							var image = cIM.get(this.model.get("img")).get("img");
+							var x = 0.5 * Math.sqrt(2) * this.model.get("r");
+							var y = (x / image.width) * image.height;
 							ctx.drawImage(
-								cIM.get(this.model.get("img")).get("img"),
-								this.model.get("x") - (a / 2),
-								this.model.get("y") - (a / 2),
-								a,
-								a
+								image,
+								this.model.get("x") - (x / 2),
+								this.model.get("y") - (y / 2),
+								x,
+								y
 							);
 						}
 					}
@@ -311,20 +313,14 @@ $(document).ready(function() {
 		
 		var NavbarView= Backbone.View.extend({
 			initialize: function() {
-				
-				//this.el.appendChild(img1);;
-				
 				this.el.setAttribute("align", "center");
 				this.el.style.display = 'none';
-				//a(href="http://es.linkedin.com/in/spirinvladimir/") by Spirin Vladimir
 				var div_nav = document.createElement("div");
 				if ($.browser.mozilla === true) {
 					div_nav.setAttribute("align", "left");
 				} else {
 					div_nav.setAttribute("align", "center");
 				}
-				//div_nav.appendChild(img1);;
-				
 				div_nav.appendChild(this.options.canvas);
 				this.el.appendChild(div_nav);
 			},
@@ -341,51 +337,49 @@ $(document).ready(function() {
 		var LoaderView= Backbone.View.extend({
 			initialize: function() {
 				
-				var h1 = document.createElement("h1");
-				h1.style.color = "black";
 				
-				h1.appendChild(document.createTextNode("Deep Data"));
-				h1.setAttribute("align", "center");
-				
-				var r0 = document.createElement("div");
-				r0.setAttribute("class", "row");
-				r0.appendChild(h1);
-				
-				this.el.appendChild(r0);
 				
 				var img1 = document.createElement("img");
-				img1.setAttribute("class", "img-rounded");
+				//img1.setAttribute("class", "img-rounded");
+				var _el = this.el;
 				img1.onload = function () {
 					var w = 1 * window.innerWidth;
 					var h = 1 * window.innerHeight;
 					var x = Math.floor(0.5 * w);
 					var y = Math.floor(img1.height * x / img1.width);
 					var offx = 0.52 * (w - x);//0.5 - center
-					var offy = 0.3 * (h - y) ;//0.5 - center
+					var offy = 0;
+					if (h > y) {
+						offy = 0.3 * (h - y) ;//0.5 - center
+					}
 					img1.width = x;
 					img1.height = y;
-					$(img1).offset({left: offx, top: offy});
-					//$(img1).fadeIn('slow');
 					
+					// Loading...
+					var p = document.createElement("p");
+					p.appendChild(document.createTextNode("Loading..."));
+					p.setAttribute("align", "center");
+					var r1 = document.createElement("div");
+					r1.setAttribute("class", "row");
+					r1.appendChild(p);
+					_el.insertBefore(r1, _el.getElementsByTagName('div')[0]);
+					// image
+					var r2 = document.createElement("div");
+					r2.setAttribute("class", "row");
+					r2.appendChild(img1);
+					_el.insertBefore(r2, _el.getElementsByTagName('div')[0]);
+					$(img1).offset({left: offx, top: offy});
+					// Title: Deep Data
+					var h1 = document.createElement("h1");
+					h1.style.color = "black";
+					h1.appendChild(document.createTextNode("Deep Data"));
+					h1.setAttribute("align", "center");
+					var r0 = document.createElement("div");
+					r0.setAttribute("class", "row");
+					r0.appendChild(h1);
+					_el.insertBefore(r0, _el.getElementsByTagName('div')[0]);
 				};
 				img1.src = "/img/DD.png";
-				//img1.style.display = 'none';
-				
-				var r2 = document.createElement("div");
-				r2.setAttribute("class", "row");
-				r2.appendChild(img1);
-				
-				this.el.appendChild(r2);
-				
-				var p = document.createElement("p");
-				p.appendChild(document.createTextNode("Loading..."));
-				p.setAttribute("align", "center");
-				
-				var r1 = document.createElement("div");
-				r1.setAttribute("class", "row");
-				r1.appendChild(p);
-				
-				this.el.appendChild(r1);
 				
 				this.options.parent.appendChild(this.el);
 			}
@@ -420,6 +414,18 @@ $(document).ready(function() {
 								canvasView.render()
 							]);
 						})();
+						// Block start: google-analytics
+						var _gaq = _gaq || [];
+						_gaq.push(['_setAccount', 'UA-38147981-1']);
+						_gaq.push(['_trackPageview']);
+						
+						(function() {
+						var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+						ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+						var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+						})();
+						// Block end: google-analytics
+						
 					});
 				};
 				logo.src = "/img/DD.png";
@@ -446,12 +452,14 @@ $(document).ready(function() {
 		
 		var Ball = Backbone.Model.extend({
 			initialize: function() {
+				if (this.has("top")) {
+					this.set("x", center.x);
+					this.set("y", center.y);
+					this.set("r", center.r);
+				}
 				this.set({view: new BallView({model: this, className: ""})}, {silent: true});
 			},
 			defaults: {
-				"x": center.x,
-				"y": center.y,
-				"r": center.r,
 				"draw": true,
 				"alfa": 0
 			},
@@ -475,7 +483,7 @@ $(document).ready(function() {
 				if(this.has("childs")){
 					this.set("to_r", center.r);
 				} else {
-					this.set("to_r", Math.floor(0.8 * center.r));
+					this.set("to_r", Math.floor(0.5 * center.r));
 				}
 				this.set("to_x", center.x);
 				this.set("to_y", center.y);
@@ -484,6 +492,12 @@ $(document).ready(function() {
 				//this.set("timer", new Date());
 			},
 			go: function() {
+				// t -> ++
+				// x0.................x.........................to_x
+				// t0..................t1.......................?
+				
+				// v = 
+				
 				// f(x) = to_x - x     => 0
 				// x = to_x -f(x);
 				// f(x)     => to_x
@@ -558,9 +572,7 @@ $(document).ready(function() {
 						var child_model = model.collection.get(id);
 						
 						alfa = alfa + 2 * Math.PI / childs.length;
-						if(typeof child_model === 'undefined') {
-							console.log(id);
-						}
+						
 						child_model.set("alfa", alfa);
 						
 						if (child_model.has("mouse")) {
